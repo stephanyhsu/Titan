@@ -3,10 +3,6 @@ package db.mysql;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-
-import db.DBConnection;
-import db.DBConnectionFactory;
-
 import java.sql.Connection;
 
 public class MySQLTableCreation {

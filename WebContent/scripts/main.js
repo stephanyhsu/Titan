@@ -2,34 +2,84 @@
 	  /**
 	   * Variables
 	   */
-	  var user_id = '1111';
-	  var lng = -122.08;
-	  var lat = 37.38;
+	  var user_id = '';
+	  var user_fullname = '';
+	  var lng = -74;
+	  var lat = 40;
 	
-	  function $(tag, options) {
-	    if (!options) {
-	      return document.getElementById(tag);
-	    }
-	
-	    var element = document.createElement(tag);
-	
-	    for ( var option in options) {
-	      if (options.hasOwnProperty(option)) {
-	        element[option] = options[option];
-	      }
-	    }
-	
-	    return element;
-	  }
 	  
 	  function init() {
 		// Register event listeners
+		$('login-btn').addEventListener('click', login);
 		$('nearby-btn').addEventListener('click', loadNearbyItems);
 		$('fav-btn').addEventListener('click', loadFavoriteItems);
 		$('recommend-btn').addEventListener('click', loadRecommendedItems);
 		
-		initGeoLocation();
+		validateSession();
 	  }
+	  
+	  /**
+	   * Session
+	   */
+		function validateSession() {
+			// The request parameters
+			var url = './LoginServlet';
+			var req = JSON.stringify({});
+	
+			// display loading message
+			showLoadingMessage('Validating session...');
+	
+			// make AJAX call
+			ajax('GET', url, req,
+			// session is still valid
+			function(res) {
+				var result = JSON.parse(res);
+	
+				if (result.status === 'OK') {
+					onSessionValid(result);
+				}
+			});
+		}
+
+		function onSessionValid(result) {
+			user_id = result.user_id;
+			user_fullname = result.name;
+
+			var loginForm = $('login-form');
+			var itemNav = $('item-nav');
+			var itemList = $('item-list');
+			var avatar = $('avatar');
+			var welcomeMsg = $('welcome-msg');
+			var logoutBtn = $('logout-link');
+
+			welcomeMsg.innerHTML = 'Welcome, ' + user_fullname;
+
+			showElement(itemNav);
+			showElement(itemList);
+			showElement(avatar);
+			showElement(welcomeMsg);
+			showElement(logoutBtn, 'inline-block');
+			hideElement(loginForm);
+
+			initGeoLocation();
+		}
+
+		function onSessionInvalid() {
+			var loginForm = $('login-form');
+			var itemNav = $('item-nav');
+			var itemList = $('item-list');
+			var avatar = $('avatar');
+			var welcomeMsg = $('welcome-msg');
+			var logoutBtn = $('logout-link');
+	
+			hideElement(itemNav);
+			hideElement(itemList);
+			hideElement(avatar);
+			hideElement(logoutBtn);
+			hideElement(welcomeMsg);
+	
+			showElement(loginForm);
+		}
 	  
 	  function initGeoLocation() {
 			if (navigator.geolocation) {
@@ -101,6 +151,60 @@
 				xhr.send(data);
 			}
 		}
+		
+		// -----------------------------------
+		// Login
+		// -----------------------------------
+
+		function login() {
+			var username = $('username').value;
+			var password = $('password').value;
+			password = md5(username + md5(password));
+
+			// The request parameters
+			var url = './LoginServlet';
+			var params = 'user_id=' + username + '&password=' + password;
+			var req = JSON.stringify({});
+
+			ajax('POST', url + '?' + params, req,
+			// successful callback
+			function(res) {
+				var result = JSON.parse(res);
+
+				// successfully logged in
+				if (result.status === 'OK') {
+					onSessionValid(result);
+				}
+			},
+			// error
+			function() {
+				showLoginError();
+			});
+		}
+
+		function showLoginError() {
+			$('login-error').innerHTML = 'Invalid username or password';
+		}
+
+		function clearLoginError() {
+			$('login-error').innerHTML = '';
+		}
+		
+	// -----------------------------------
+	// Helper Functions
+	// -----------------------------------
+
+	  function activeBtn(btnId) {
+		    var btns = document.getElementsByClassName('main-nav-btn');
+		
+		    for (var i = 0; i < btns.length; i++) {
+		      btns[i].className = btns[i].className.replace(/\bactive\b/, '');
+		  }
+
+	    // active the one that has id = btnId
+	    var btn = $(btnId);
+	    		btn.className += ' active';
+		}
 	  
 	  function showLoadingMessage(msg) {
 			var itemList = $('item-list');
@@ -117,17 +221,38 @@
 		    itemList.innerHTML = '<p class="notice"><i class="fa fa-exclamation-circle"></i> ' + msg + '</p>';
 		  }
 		  
-		  function activeBtn(btnId) {
-		    var btns = document.getElementsByClassName('main-nav-btn');
-		
-		    for (var i = 0; i < btns.length; i++) {
-		      btns[i].className = btns[i].className.replace(/\bactive\b/, '');
-		  }
-
-	    // active the one that has id = btnId
-	    var btn = $(btnId);
-	    		btn.className += ' active';
-		}
+	  /**
+		 * A helper function that creates a DOM element <tag options...>
+		 * 
+		 * @param tag
+		 * @param options
+		 * @returns
+		 */
+		  
+	  function $(tag, options) {
+	    if (!options) {
+	      return document.getElementById(tag);
+	    }
+	
+	    var element = document.createElement(tag);
+	
+	    for ( var option in options) {
+	      if (options.hasOwnProperty(option)) {
+	        element[option] = options[option];
+	      }
+	    }
+	
+	    return element;
+	  }
+	  
+	  function hideElement(element) {
+			element.style.display = 'none';
+	  }
+	
+	  function showElement(element, style) {
+		  var displayStyle = style ? style : 'block';
+		  element.style.display = displayStyle;
+	  }
   
 	  /**
 	   * AJAX helper
@@ -166,7 +291,7 @@
 		    }
 	  	}
 	  
-	  // AJAX call server-side APIs
+	// AJAX call server-side APIs
   
 	/**
 	 * API #1 Load the nearby items API end point: [GET]

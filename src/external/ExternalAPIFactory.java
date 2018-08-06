@@ -2,14 +2,13 @@
 package external;
 
 public class ExternalAPIFactory {
-	private static final String DEFAULT_PIPELINE = "ticketmaster";
+	private static final String DEFAULT_PIPELINE = "restaurant";
 
 	// Start different APIs based on the pipeline.
 	public static ExternalAPI getExternalAPI(String pipeline) {
 		switch (pipeline) {
 		case "restaurant":
-			// return new YelpAPI();
-			return null;
+			return new YelpAPI();
 		case "job":
 			// return new LinkedInAPI();
 			return null;

@@ -13,6 +13,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import entity.Item;
+
 
 public class RpcHelper {
 	 // Writes a JSONObject to http response.
@@ -60,4 +62,17 @@ public class RpcHelper {
 			return null;
 		}
 
+		 // Converts a list of Item objects to JSONArray.
+		// This is from last semester
+		  public static JSONArray getJSONArray(List<Item> items) {
+		    JSONArray result = new JSONArray();
+		    try {
+		      for (Item item : items) {
+		        result.put(item.toJSONObject());
+		      }
+		    } catch (Exception e) {
+		      e.printStackTrace();
+		    }
+		    return result;
+		  }
 }
